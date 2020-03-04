@@ -1,0 +1,111 @@
+{
+********************************* XG FILE FORMAT *********************************
+(c) 2009-2014 GameSite 2000 Ltd;
+
+This information can be freely redistributed
+
+Last modification: 12/31/2013
+
+A .XG file is a RichGameFormatfile using DirectX format (unfortunately abandoned by Microsoft after Vista).
+
+Steps to read XG file:
+1. Strip RichGameFormatfile.
+  - Read the first Sizeof(RichGameHeader)
+  - The 4 first byte should be RGMH (RM_MAGICNUMBER) if not, the file is invalid.
+  - The content of the file is starting at SizeOf(TRichGameHeader) + RichGameHeader.dwThumbnailSize
+  - Copy the remain data into "temp.xg"
+  - Close the file.
+  - Note: The thumbnail is a JPG that show the position selected at the time of saving
+  
+2. uncompress the file temp.xg
+temp.xg can be uncompressed using ZLIB (see ZlibArchive unit)  4 files are generated
+      temp.xg   // full game                            fixed size (2560 bytes) using TSaveRec 
+      temp.xgi  // header (for fast information access) 1st record and Last record (TSaveRec) of temp.xg
+      temp.xgr  // rollouts indexed in temp.xg          fixed size (2184 bytes) using TRolloutContext 
+      temp.xgc  // comments indexed in temp.xg          text file using RTF format with CRLF to separate the
+                                                        comments, after reading each line replace
+                                                        #1#2 by #13#10 (CRLF)
+
+3. Load the individual files
+
+}
+
+{ -------------- NOTES on PASCAL TYPES ------------------------
+All data is stored using little-endian format
+Pascal Syntax is not Case Senstive
+
+
+**** INTEGERS *****
+            SIZE  SIGNED  RANGE       
+ShortInt    1     Yes     -128..127   
+byte        1     No       0..255
+
+SmallInt    2     Yes     -32768..32767
+Word        2     No       0..65535
+
+Integer     4     Yes     -2147483648..2147483647
+Dword       4     No       0..4294967295
+Longword    4     No       0..4294967295
+
+Int64       8     Yes     -2^63..2^63-1
+UInt64      8     No       0..2^64-1
+
+
+**** FLOATS *****
+            SIZE  SIGNED  RANGE       
+single      4     Yes     Single precision
+double      8     Yes     Double Precision
+
+**** STRINGS *****
+                          SIZE      NOTES
+char                      2         in recent version of Delphi, this is the Unicode double byte value of
+                                    the character
+WideChar                  2         same as char
+AnsiChar                  1         ANSI char : #0 to #255
+
+array [a..b] of widechar  (b-a+1)*2 #0 terminated string, typically a=0
+array [a..b] of char      (b-a+1)*2 same as above
+string[b]                 (b+1)     ANSI string, the 1st byte is the string length. it is NOT #0 terminated
+
+**** MISC ****
+          SIZE  NOTES
+Boolean   1     0=false or 1=true stored in a byte.
+TdateTime 8     Double precision Float, The integral part of a TDateTime value is the number of days that have
+                passed since December 30, 1899. The fractional part of a TDateTime value is the time of day.
+                Example 35065.541667 January 1, 1996; 1:00 P.M
+Pointer   4     memory address, in 32 bits it is 4 bytes long, equivalent to Dword
+
+**** RECORD ALIGNEMENT ****
+array [a..b] of char    aligns on a 2 byte boundary
+Smallint and word       aligns on a 2 byte boundary
+
+integers and Single     aligns on a 4 byte boundary
+
+Doubles and DateTime    aligns on a 8 byte boundary
+
+Boolean                 does not align
+byte and shortint       does not align
+String[x]               does not align
+
+example TsaveRec               Size Pad Start End
+    Previous: Pointer;            4         0   3
+    Next: Pointer;                4         4   7
+    case EntryType: Typesave....  1         8   8
+        SPlayer1,                41         9  49
+        SPlayer2: string[40];    41        50  90
+        MatchLength: integer;     4   1    92  95   //needs one byte padding to start on a multiple of 4
+        Variation: integer;       4        96  99
+        Crawford: Boolean;        1       100 100
+        Jacoby: Boolean;          1       101 101
+        Beaver: Boolean;          1       102 102
+        AutoDouble: Boolean;      1       103 103
+        Elo1: Double;             8       104 111   //no alignment needed as 104 is multiple of 8
+        Elo2: Double;             8       112 119
+        exp1: integer;            4       120 123
+        exp2: integer;            4       124 127
+        Date: TdateTime;          8       128 135
+        SEvent: string[128];    129       136 264
+        GameId: integer;          4   3   268 271   //needs 3 bytes padding to start on a multiple of 4
+        ......................
+
+}

@@ -21,9 +21,9 @@
 from __future__ import with_statement as _with
 import tempfile as _tempfile
 import shutil as _shutil
-import struct as _struct
 import os as _os
-import xgutils as _xgutils
+# add current path to sys.path
+_os.sys.path.append(_os.path.dirname(_os.path.abspath(__file__)))
 import xgzarc as _xgzarc
 import xgstruct as _xgstruct
 

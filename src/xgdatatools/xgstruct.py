@@ -24,11 +24,13 @@
 #   published at http://www.extremegammon.com/xgformat.aspx
 #
 
-import xgutils as _xgutils
 import struct as _struct
 import os as _os
 import uuid as _uuid
 import binascii as _binascii
+# add current path to sys.path
+_os.sys.path.append(_os.path.dirname(_os.path.abspath(__file__)))
+import xgutils as _xgutils
 
 
 class GameDataFormatHdrRecord(dict):

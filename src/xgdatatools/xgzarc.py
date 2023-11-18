@@ -26,6 +26,8 @@ import tempfile as _tempfile
 import struct as _struct
 import zlib as _zlib
 import os as _os
+# add current path to sys.path
+_os.sys.path.append(_os.path.dirname(_os.path.abspath(__file__)))
 import xgutils as _xgutils
 
 
